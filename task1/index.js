@@ -58,7 +58,20 @@ function main() {
   };
 
   const buffers = initBuffers(gl);
-  drawScene(gl, programInfo, buffers);
+  
+  var then = 0;
+  
+    // Draw the scene repeatedly
+    function render(now) {
+      now *= 0.001;  // convert to seconds
+      const deltaTime = now - then;
+      then = now;
+  
+      drawScene(gl, programInfo, buffers, deltaTime);
+  
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
 }
 
 // загружает шейдеры и встраивает в html
