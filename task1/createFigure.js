@@ -12,49 +12,30 @@ const number = 100;
 let verticesNumber = 0;
 
 function initBuffers(gl) {
-  const [positions, colors] = calculatePositions();
-
-  // Create a buffer for the square's positions.
-
   const positionBuffer = gl.createBuffer();
+  const colorBuffer = gl.createBuffer();
+  const normalBuffer = gl.createBuffer();
+  const indexBuffer = gl.createBuffer();
 
-  // Select the positionBuffer as the one to apply buffer
-  // operations to from here out.
+  const [positions, colors, normals] = calculatePositions();
+  const indices = calculateIndices(positions);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
-  // Now create an array of positions for the square.
-
-  // Now pass the list of positions into WebGL to build the
-  // shape. We do this by creating a Float32Array from the
-  // JavaScript array, then use it to fill the current buffer.
-
-  gl.bufferData(gl.ARRAY_BUFFER,
-                new Float32Array(positions),
-                gl.STATIC_DRAW);
-
-  const colorBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 
-  const indexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
-  // This array defines each face as two triangles, using the
-  // indices into the vertex array to specify each triangle's
-  // position.
-
-  const indices = calculateIndices(positions);
-
-  // Now send the element array to GL
-
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
-      new Uint16Array(indices), gl.STATIC_DRAW);
-
-  console.log(positions.length, colors.length, indices.length);
   return {
     position: positionBuffer,
     color: colorBuffer,
+    normal: normalBuffer,
     indices: indexBuffer,
   };
 }
@@ -76,6 +57,7 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
   const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
   const zNear = 0.1;
   const zFar = 100.0;
+
   const projectionMatrix = mat4.create();
 
   // note: glmatrix.js always has the first argument
@@ -90,11 +72,11 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
   // the center of the scene.
   const modelViewMatrix = mat4.create();
 
-  // устанавливаем позицию квадрата, загружая позицию и размещая ее от камеры на 6 единиц
+  // устанавливаем позицию предмета от камеры на 6 единиц
 
   mat4.translate(modelViewMatrix,     // destination matrix
                   modelViewMatrix,     // matrix to translate
-                  [-0.0, 0.0, -10.0]);  // amount to translate
+                  [-0.0, 0.0, distCamera]);  // amount to translate
   mat4.rotate(modelViewMatrix,  // destination matrix
               modelViewMatrix,  // matrix to rotate
               cubeRotation,     // amount to rotate in radians
@@ -104,8 +86,10 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
               cubeRotation * .7,// amount to rotate in radians
               [0, 1, 0]);       // axis to rotate around (X)
 
-
-
+  const normalMatrix = mat4.create();
+  mat4.invert(normalMatrix, modelViewMatrix);
+  mat4.transpose(normalMatrix, normalMatrix);
+  
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute.
   {
@@ -145,6 +129,24 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
         programInfo.attribLocations.vertexColor);
   }
 
+  {
+    const numComponents = 3;
+    const type = gl.FLOAT;
+    const normalize = false;
+    const stride = 0;
+    const offset = 0;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.normal);
+    gl.vertexAttribPointer(
+        programInfo.attribLocations.vertexNormal,
+        numComponents,
+        type,
+        normalize,
+        stride,
+        offset);
+    gl.enableVertexAttribArray(
+        programInfo.attribLocations.vertexNormal);
+  }
+
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
 
   // Tell WebGL to use our program when drawing
@@ -161,6 +163,10 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
       programInfo.uniformLocations.modelViewMatrix,
       false,
       modelViewMatrix);
+  gl.uniformMatrix4fv(
+    programInfo.uniformLocations.normalMatrix,
+    false,
+    normalMatrix);
 
   // Since each face of our cube is comprised of two triangles, 
   // there are 6 vertices per side, or 36 total vertices in the cube
@@ -179,23 +185,25 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
 function calculatePositions() {
   const radius = 3;
   let points = [];
-  let verticesColors = [];
+  let vertexColors = [];
+  let vertexNormals = [];
+
   for  (let i = 0; i < number; ++i) {
     const u = i / (number - 1) * Math.PI;
     for (let j = 0; j < number; ++j) {
       const v = j / (number - 1) * 2 * Math.PI;
-      let x = radius * Math.sin(u) * Math.cos(v);
-      let y = radius * Math.sin(u) * Math.sin(v);
-      let z = radius * Math.cos(u);
-      points.push(x, y, z);
-      if (i % 2 === 0) {
-        verticesColors.push(1.0, 0.0, 0.0, 1.0);
-      } else {
-        verticesColors.push(1.0, 1.0, 1.0, 1.0);
-      }
+      let x = Math.sin(u) * Math.cos(v);
+      let y = Math.sin(u) * Math.sin(v);
+      let z = Math.cos(u);
+
+      points.push(radius * x, radius * y, radius * z);
+      vertexNormals.push(x, y, z);
+      vertexColors.push(x * 0.5 + 0.5, y * 0.5 + 0.5, z * 0.5 + 0.5, 1.0);
+      //vertexColors.push(1.0, 1.0, 1.0, 1.0);
     }
   }
-  return [ points, verticesColors ];
+
+  return [ points, vertexColors, vertexNormals ];
 }
 
 function calculateIndices(positions) {
