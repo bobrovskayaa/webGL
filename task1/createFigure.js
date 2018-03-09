@@ -1,53 +1,19 @@
-const positions = [
-  // Front face
-  -1.0, -1.0,  1.0,
-   1.0, -1.0,  1.0,
-   1.0,  1.0,  1.0,
-  -1.0,  1.0,  1.0,
-  
-  // Back face
-  -1.0, -1.0, -1.0,
-  -1.0,  1.0, -1.0,
-   1.0,  1.0, -1.0,
-   1.0, -1.0, -1.0,
-  
-  // Top face
-  -1.0,  1.0, -1.0,
-  -1.0,  1.0,  1.0,
-   1.0,  1.0,  1.0,
-   1.0,  1.0, -1.0,
-  
-  // Bottom face
-  -1.0, -1.0, -1.0,
-   1.0, -1.0, -1.0,
-   1.0, -1.0,  1.0,
-  -1.0, -1.0,  1.0,
-  
-  // Right face
-   1.0, -1.0, -1.0,
-   1.0,  1.0, -1.0,
-   1.0,  1.0,  1.0,
-   1.0, -1.0,  1.0,
-  
-  // Left face
-  -1.0, -1.0, -1.0,
-  -1.0, -1.0,  1.0,
-  -1.0,  1.0,  1.0,
-  -1.0,  1.0, -1.0,
-];
-
-const faceColors = [
+/*const faceColors = [
   [1.0,  1.0,  1.0,  1.0],    // Front face: white
-  [1.0,  0.0,  0.0,  1.0],    // Back face: red
+  [1.0,  0.0,  0.0,  1.0]    // Back face: red
   [0.0,  1.0,  0.0,  1.0],    // Top face: green
   [0.0,  0.0,  1.0,  1.0],    // Bottom face: blue
   [1.0,  1.0,  0.0,  1.0],    // Right face: yellow
   [1.0,  0.0,  1.0,  1.0],    // Left face: purple
-];
+];*/
 
 var cubeRotation = 0.0;
+const number = 100;
+let verticesNumber = 0;
 
 function initBuffers(gl) {
+  const [positions, colors] = calculatePositions();
+
   // Create a buffer for the square's positions.
 
   const positionBuffer = gl.createBuffer();
@@ -67,15 +33,6 @@ function initBuffers(gl) {
                 new Float32Array(positions),
                 gl.STATIC_DRAW);
 
-  var colors = [];
-
-  for (var j = 0; j < faceColors.length; ++j) {
-    const c = faceColors[j];
-
-    // Repeat each color four times for the four vertices of the face
-    colors = colors.concat(c, c, c, c);
-  }
-
   const colorBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
@@ -87,20 +44,14 @@ function initBuffers(gl) {
   // indices into the vertex array to specify each triangle's
   // position.
 
-  const indices = [
-    0,  1,  2,      0,  2,  3,    // front
-    4,  5,  6,      4,  6,  7,    // back
-    8,  9,  10,     8,  10, 11,   // top
-    12, 13, 14,     12, 14, 15,   // bottom
-    16, 17, 18,     16, 18, 19,   // right
-    20, 21, 22,     20, 22, 23,   // left
-  ];
+  const indices = calculateIndices(positions);
 
   // Now send the element array to GL
 
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
       new Uint16Array(indices), gl.STATIC_DRAW);
 
+  console.log(positions.length, colors.length, indices.length);
   return {
     position: positionBuffer,
     color: colorBuffer,
@@ -143,7 +94,7 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
 
   mat4.translate(modelViewMatrix,     // destination matrix
                   modelViewMatrix,     // matrix to translate
-                  [-0.0, 0.0, -6.0]);  // amount to translate
+                  [-0.0, 0.0, -10.0]);  // amount to translate
   mat4.rotate(modelViewMatrix,  // destination matrix
               modelViewMatrix,  // matrix to rotate
               cubeRotation,     // amount to rotate in radians
@@ -214,11 +165,45 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
   // Since each face of our cube is comprised of two triangles, 
   // there are 6 vertices per side, or 36 total vertices in the cube
   {
-    const vertexCount = 36;
+    const vertexCount = verticesNumber;
     const type = gl.UNSIGNED_SHORT;
     const offset = 0;
     gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
   }
 
   cubeRotation += deltaTime;
+}
+
+// calculate sphere
+
+function calculatePositions() {
+  const radius = 3;
+  let points = [];
+  let verticesColors = [];
+  for  (let i = 0; i < number; ++i) {
+    const u = i / (number - 1) * Math.PI;
+    for (let j = 0; j < number; ++j) {
+      const v = j / (number - 1) * 2 * Math.PI;
+      let x = radius * Math.sin(u) * Math.cos(v);
+      let y = radius * Math.sin(u) * Math.sin(v);
+      let z = radius * Math.cos(u);
+      points.push(x, y, z);
+      if (i % 2 === 0) {
+        verticesColors.push(1.0, 0.0, 0.0, 1.0);
+      } else {
+        verticesColors.push(1.0, 1.0, 1.0, 1.0);
+      }
+    }
+  }
+  return [ points, verticesColors ];
+}
+
+function calculateIndices(positions) {
+  let indices = [];
+  for (let i = 0; i < positions.length/3 - number - 1; i++) {
+    indices.push(i, i+1, i+number);
+    indices.push(i+number+1, i+1, i+number);
+  }
+  verticesNumber = indices.length;
+  return indices;
 }

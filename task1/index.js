@@ -29,6 +29,9 @@ main();
 
 function main() {
   const canvas = document.querySelector("#glCanvas");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
   // инициализация контекста GL
   const gl = canvas.getContext("webgl");
 
