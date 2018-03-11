@@ -183,7 +183,7 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
 // calculate sphere
 
 function calculatePositions() {
-  const radius = 3;
+  const radius = 0.1;
   let points = [];
   let vertexColors = [];
   let vertexNormals = [];
@@ -191,15 +191,25 @@ function calculatePositions() {
   for  (let i = 0; i < number; ++i) {
     const u = i / (number - 1) * Math.PI;
     for (let j = 0; j < number; ++j) {
-      const v = j / (number - 1) * 2 * Math.PI;
-      let x = Math.sin(u) * Math.cos(v);
-      let y = Math.sin(u) * Math.sin(v);
-      let z = Math.cos(u);
+      const t = j / (number - 1) * 2 * Math.PI;
+      const x = 16 * Math.pow(Math.sin(t), 3) * Math.sin(u);
+      const y = (13 * Math.cos(t) - 5 * Math.cos(2*t)  - 2 * Math.cos(3*t) - Math.cos(4*t)) * Math.sin(u) ;
+      const z = 6 * Math.cos(u);
+      const normalz = 48 * Math.pow(Math.sin(t),2) * Math.cos(t) * 
+        (13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)) * Math.sin(u) * Math.cos(u) -
+        16*Math.pow(Math.sin(t),3) * 
+        (-13*Math.sin(t)+10*Math.sin(2*t)+6*Math.sin(3*t)+4*Math.sin(4*t)) * Math.sin(u) * Math.cos(u);
+      const normalx = -6 * (-13*Math.sin(t)+10*Math.sin(2*t)+6*Math.sin(3*t)+4*Math.sin(4*t)) * Math.pow(Math.sin(u),2);
+      const normaly = 288 * Math.pow(Math.sin(t),2) * Math.cos(t) * Math.pow(Math.sin(u),2);
+      const denominator = Math.sqrt(Math.pow(normalx,2)+Math.pow(normaly,2)+Math.pow(normalz,2));
+
 
       points.push(radius * x, radius * y, radius * z);
-      vertexNormals.push(x, y, z);
-      vertexColors.push(x * 0.5 + 0.5, y * 0.5 + 0.5, z * 0.5 + 0.5, 1.0);
-      //vertexColors.push(1.0, 1.0, 1.0, 1.0);
+      vertexNormals.push(normalx/denominator, normaly/denominator, normalz/denominator);
+      vertexColors.push(normalx/denominator * 0.5 + 0.5, 
+        normaly/denominator * 0.5 + 0.5,
+        normalz/denominator * 0.5 + 0.5, 1.0);
+      vertexColors.push(1.0, 1.0, 1.0, 1.0);
     }
   }
 
