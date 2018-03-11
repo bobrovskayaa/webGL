@@ -1,15 +1,6 @@
-/*const faceColors = [
-  [1.0,  1.0,  1.0,  1.0],    // Front face: white
-  [1.0,  0.0,  0.0,  1.0]    // Back face: red
-  [0.0,  1.0,  0.0,  1.0],    // Top face: green
-  [0.0,  0.0,  1.0,  1.0],    // Bottom face: blue
-  [1.0,  1.0,  0.0,  1.0],    // Right face: yellow
-  [1.0,  0.0,  1.0,  1.0],    // Left face: purple
-];*/
-
-var cubeRotation = 0.0;
-const number = 100;
+let cubeRotation = 0.0;
 let verticesNumber = 0;
+let number = 100; // степень детализации
 
 function initBuffers(gl) {
   const positionBuffer = gl.createBuffer();
@@ -59,20 +50,14 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
   const zFar = 100.0;
 
   const projectionMatrix = mat4.create();
+  const modelViewMatrix = mat4.create(); // центр сцены
+  const normalMatrix = mat4.create();
 
-  // note: glmatrix.js always has the first argument
-  // as the destination to receive the result.
   mat4.perspective(projectionMatrix,
                     fieldOfView,
                     aspect,
                     zNear,
                     zFar);
-
-  // Set the drawing position to the "identity" point, which is
-  // the center of the scene.
-  const modelViewMatrix = mat4.create();
-
-  // устанавливаем позицию предмета от камеры на 6 единиц
 
   mat4.translate(modelViewMatrix,     // destination matrix
                   modelViewMatrix,     // matrix to translate
@@ -86,7 +71,6 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
               cubeRotation * .7,// amount to rotate in radians
               [0, 1, 0]);       // axis to rotate around (X)
 
-  const normalMatrix = mat4.create();
   mat4.invert(normalMatrix, modelViewMatrix);
   mat4.transpose(normalMatrix, normalMatrix);
   
@@ -148,10 +132,14 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
   }
 
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
-
-  // Tell WebGL to use our program when drawing
-
   gl.useProgram(programInfo.program);
+
+  {
+    const vertexCount = verticesNumber;
+    const type = gl.UNSIGNED_SHORT;
+    const offset = 0;
+    gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+  }
 
   // Set the shader uniforms
 
@@ -168,22 +156,13 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
     false,
     normalMatrix);
 
-  // Since each face of our cube is comprised of two triangles, 
-  // there are 6 vertices per side, or 36 total vertices in the cube
-  {
-    const vertexCount = verticesNumber;
-    const type = gl.UNSIGNED_SHORT;
-    const offset = 0;
-    gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
-  }
-
   cubeRotation += deltaTime;
 }
 
 // calculate sphere
 
 function calculatePositions() {
-  const radius = 0.1;
+  const radius = 0.3;
   let points = [];
   let vertexColors = [];
   let vertexNormals = [];

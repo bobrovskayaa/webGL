@@ -1,6 +1,7 @@
-var gl; // глобальная переменная для контекста WebGL
-// вершинный шейдер (положение и форма вершин)
+let gl; // глобальная переменная для контекста WebGL
+let buffers;
 
+// вершинный шейдер (положение и форма вершин)
 const vsSource = `
 attribute vec4 aVertexPosition;
 attribute vec3 aVertexNormal;
@@ -51,7 +52,7 @@ function main() {
   canvas.height = window.innerHeight;
 
   // инициализация контекста GL
-  const gl = canvas.getContext("webgl");
+  gl = canvas.getContext("webgl");
 
   // продолжать только если WebGL доступен и работает
   if (!gl) {
@@ -80,9 +81,9 @@ function main() {
     },
   };
 
-  const buffers = initBuffers(gl);
+  buffers = initBuffers(gl);
   
-  var then = 0;
+  let then = 0;
   
     // Draw the scene repeatedly
     function render(now) {

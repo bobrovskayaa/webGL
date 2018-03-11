@@ -8,5 +8,13 @@ document.addEventListener('keydown', event => {
     case 'ArrowDown':
       --distCamera;
       break;
+    case '=':
+      number += 10;
+      buffers = initBuffers(gl);
+      break;
+    case '-':
+      buffers = initBuffers(gl);
+      number -= 10;
+      break;
   }
 })
