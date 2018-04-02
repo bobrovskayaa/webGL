@@ -6,16 +6,22 @@ const vsSource = `
 attribute vec4 aVertexPosition;
 attribute vec3 aVertexNormal;
 attribute vec4 aVertexColor;
+attribute vec2 aTextureCoord;
 
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 uniform mat4 uNormalMatrix;
+
+varying highp vec2 vTextureCoord;
 
 varying lowp vec4 vColor;
 varying highp vec3 vLighting;
 
 void main(void) {
   gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+
+  vTextureCoord = aTextureCoord;
+
   vColor = aVertexColor;
   
   highp vec3 ambientLight = vec3(0.3, 0.3, 0.3);
@@ -32,15 +38,17 @@ void main(void) {
 }
 `;
 
-// фрагментный шейдер (цвет) пока квадрата
 const fsSource = `
-  varying lowp vec4 vColor;
+  // varying lowp vec4 vColor;
   varying highp vec3 vLighting;
+  varying highp vec2 vTextureCoord;
+
+  uniform sampler2D uSampler;  
 
   void main() {
-    gl_FragColor = vColor;
+  // highp vec4 texelColor = vColor;
 
-    gl_FragColor = vec4(vColor.rgb * vLighting, vColor.a);
+    gl_FragColor = texture2D(uSampler, vTextureCoord);
   }
 `;
 
@@ -51,20 +59,8 @@ function main() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  // инициализация контекста GL
-  gl = canvas.getContext("webgl");
-
-  // продолжать только если WebGL доступен и работает
-  if (!gl) {
-    console.log("Unable to initialize WebGL. Your browser or machine may not support it.");
-    return;
-  }
-
-  // установить в качестве цвета очистки буфера цвета черный, полная непрозрачность
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
-  // очистить буфер цвета
-  gl.clear(gl.COLOR_BUFFER_BIT);
-
+  gl = initGL(gl, canvas);
+  console.log('hello');
 
   const shaderProgram = initShaders(gl, vsSource, fsSource);
   const programInfo = {
@@ -73,29 +69,49 @@ function main() {
       vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
       vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor'),
       vertexNormal: gl.getAttribLocation(shaderProgram, 'aVertexNormal'),
+      textureCoord: gl.getAttribLocation(shaderProgram, 'aTextureCoord'),
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
       modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
       normalMatrix: gl.getUniformLocation(shaderProgram, 'uNormalMatrix'),
+      uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
     },
   };
 
   buffers = initBuffers(gl);
+  let texture = initTextures(gl, '1.jpeg');
   
   let then = 0;
   
     // Draw the scene repeatedly
     function render(now) {
       now *= 0.001;  // convert to seconds
+
       const deltaTime = now - then;
       then = now;
+      const deltaTimeTexture = now*10 - then;
   
-      drawScene(gl, programInfo, buffers, deltaTime);
+      drawScene(gl, programInfo, buffers, texture, deltaTime, deltaTimeTexture);
   
       requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
+}
+
+function initGL(gl, canvas) {
+  try {
+    gl = canvas.getContext("webgl");
+    gl.clearColor(0.0, 0.0, 0.0, 1.0); // установить цвет очистки буфера
+    gl.clear(gl.COLOR_BUFFER_BIT); // очистить буфер цвета
+  } catch(e) {
+    console.log("Error: ", e.message);
+  }
+  if (!gl) {
+    console.log("Unable to initialize WebGL. Your browser or machine may not support it.");
+    return;
+  }
+  return gl;
 }
 
 // загружает шейдеры и встраивает в html

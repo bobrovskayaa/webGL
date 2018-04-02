@@ -1,4 +1,5 @@
-let distCamera = -10.0;
+let distCamera = -15.0;
+let number = 250; // степень детализации
 
 document.addEventListener('keydown', event => {
   switch (event.key) {
@@ -9,12 +10,17 @@ document.addEventListener('keydown', event => {
       --distCamera;
       break;
     case '=':
-      number += 10;
-      buffers = initBuffers(gl);
+      if (number < 500) {
+        console.log(number);
+          number += 10;
+          buffers = initBuffers(gl);
+      }
       break;
     case '-':
-      buffers = initBuffers(gl);
-      number -= 10;
-      break;
+      if (number > 20) {
+        buffers = initBuffers(gl);
+        number -= 10;
+        break;
+      }
   }
 })

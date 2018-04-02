@@ -1,14 +1,15 @@
 let cubeRotation = 0.0;
 let verticesNumber = 0;
-let number = 100; // степень детализации
 
 function initBuffers(gl) {
   const positionBuffer = gl.createBuffer();
   const colorBuffer = gl.createBuffer();
   const normalBuffer = gl.createBuffer();
   const indexBuffer = gl.createBuffer();
+  const textureCoordBuffer = gl.createBuffer();
 
-  const [positions, colors, normals] = calculatePositions();
+  const [positions, colors, normals, textureCoordData] = calculatePositions();
+  console.log(textureCoordData);
   const indices = calculateIndices(positions);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -20,18 +21,23 @@ function initBuffers(gl) {
   gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
 
+  gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordData), gl.STATIC_DRAW);
+
+  //TODO: исправить детализацию
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
   return {
     position: positionBuffer,
     color: colorBuffer,
+    textureCoord: textureCoordBuffer,
     normal: normalBuffer,
     indices: indexBuffer,
   };
 }
 
-function drawScene(gl, programInfo, buffers, deltaTime) {
+function drawScene(gl, programInfo, buffers, texture, deltaTime) {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
   gl.clearDepth(1.0);                 // Clear everything
   gl.enable(gl.DEPTH_TEST);           // Enable depth testing
@@ -96,22 +102,33 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
   }
 
   {
-    const numComponents = 4;
-    const type = gl.FLOAT;
-    const normalize = false;
-    const stride = 0;
-    const offset = 0;
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-    gl.vertexAttribPointer(
-        programInfo.attribLocations.vertexColor,
-        numComponents,
-        type,
-        normalize,
-        stride,
-        offset);
-    gl.enableVertexAttribArray(
-        programInfo.attribLocations.vertexColor);
-  }
+    const num = 2; // every coordinate composed of 2 values
+    const type = gl.FLOAT; // the data in the buffer is 32 bit float
+    const normalize = false; // don't normalize
+    const stride = 0; // how many bytes to get from one set to the next
+    const offset = 0; // how many bytes inside the buffer to start from
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
+    gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, num, type, normalize, stride, offset);
+    gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
+    }
+
+  // {
+  //   const numComponents = 4;
+  //   const type = gl.FLOAT;
+  //   const normalize = false;
+  //   const stride = 0;
+  //   const offset = 0;
+  //   gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+  //   gl.vertexAttribPointer(
+  //       programInfo.attribLocations.vertexColor,
+  //       numComponents,
+  //       type,
+  //       normalize,
+  //       stride,
+  //       offset);
+  //   gl.enableVertexAttribArray(
+  //       programInfo.attribLocations.vertexColor);
+  // }
 
   {
     const numComponents = 3;
@@ -141,6 +158,15 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
     gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
   }
 
+   // Tell WebGL we want to affect texture unit 0
+   gl.activeTexture(gl.TEXTURE0);
+   
+     // Bind the texture to texture unit 0
+     gl.bindTexture(gl.TEXTURE_2D, texture);
+   
+     // Tell the shader we bound the texture to texture unit 0
+     gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+
   // Set the shader uniforms
 
   gl.uniformMatrix4fv(
@@ -159,13 +185,12 @@ function drawScene(gl, programInfo, buffers, deltaTime) {
   cubeRotation += deltaTime;
 }
 
-// calculate sphere
-
 function calculatePositions() {
   const radius = 0.3;
   let points = [];
   let vertexColors = [];
   let vertexNormals = [];
+  let textureCoordData = [];
 
   for  (let i = 0; i < number; ++i) {
     const u = i / (number - 1) * Math.PI;
@@ -174,6 +199,7 @@ function calculatePositions() {
       const x = 16 * Math.pow(Math.sin(t), 3) * Math.sin(u);
       const y = (13 * Math.cos(t) - 5 * Math.cos(2*t)  - 2 * Math.cos(3*t) - Math.cos(4*t)) * Math.sin(u) ;
       const z = 6 * Math.cos(u);
+      if (i > number - 3 && j > (number - 3)) {console.log(z);}
       const normalz = 48 * Math.pow(Math.sin(t),2) * Math.cos(t) * 
         (13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)) * Math.sin(u) * Math.cos(u) -
         16*Math.pow(Math.sin(t),3) * 
@@ -188,11 +214,11 @@ function calculatePositions() {
       vertexColors.push(normalx/denominator * 0.5 + 0.5, 
         normaly/denominator * 0.5 + 0.5,
         normalz/denominator * 0.5 + 0.5, 1.0);
-      vertexColors.push(1.0, 1.0, 1.0, 1.0);
+      textureCoordData.push(i / (number - 1), j / (number - 1));
     }
   }
 
-  return [ points, vertexColors, vertexNormals ];
+  return [ points, vertexColors, vertexNormals, textureCoordData ];
 }
 
 function calculateIndices(positions) {
