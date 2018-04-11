@@ -1,5 +1,8 @@
 let gl; // глобальная переменная для контекста WebGL
 let buffers;
+let texture = {};
+let texture1;
+let texture2;
 
 // вершинный шейдер (положение и форма вершин)
 const vsSource = `
@@ -7,6 +10,7 @@ attribute vec4 aVertexPosition;
 attribute vec3 aVertexNormal;
 attribute vec4 aVertexColor;
 attribute vec2 aTextureCoord;
+uniform float uScale;
 
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
@@ -18,7 +22,7 @@ varying lowp vec4 vColor;
 varying highp vec3 vLighting;
 
 void main(void) {
-  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition * uScale;
 
   vTextureCoord = aTextureCoord;
 
@@ -56,11 +60,14 @@ window.onload = main;
 
 function main() {
   const canvas = document.querySelector("#glCanvas");
+  const buttonChangeTexture = document.querySelector("#changeTexture");
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
   gl = initGL(gl, canvas);
   console.log('hello');
+
+  buttonChangeTexture.addEventListener('click', changeTexture);
 
   const shaderProgram = initShaders(gl, vsSource, fsSource);
   const programInfo = {
@@ -76,23 +83,29 @@ function main() {
       modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
       normalMatrix: gl.getUniformLocation(shaderProgram, 'uNormalMatrix'),
       uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
+        scale: gl.getUniformLocation(shaderProgram, 'uScale'),
     },
   };
 
   buffers = initBuffers(gl);
-  let texture = initTextures(gl, '1.jpeg');
+  texture1 = initTextures(gl, '1.jpeg');
+  texture2 = initTextures(gl, '2.jpg');
+  texture.id = 1;
+  texture.value = texture1;
   
   let then = 0;
+  // let radius = 3;
   
     // Draw the scene repeatedly
     function render(now) {
       now *= 0.001;  // convert to seconds
+      // radius =  (now % 10) ? 5 : 3;
 
       const deltaTime = now - then;
       then = now;
       const deltaTimeTexture = now*10 - then;
   
-      drawScene(gl, programInfo, buffers, texture, deltaTime, deltaTimeTexture);
+      drawScene(gl, programInfo, buffers, texture.value, deltaTime, deltaTimeTexture);
   
       requestAnimationFrame(render);
     }

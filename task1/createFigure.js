@@ -9,7 +9,6 @@ function initBuffers(gl) {
   const textureCoordBuffer = gl.createBuffer();
 
   const [positions, colors, normals, textureCoordData] = calculatePositions();
-  console.log(textureCoordData);
   const indices = calculateIndices(positions);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -38,6 +37,7 @@ function initBuffers(gl) {
 }
 
 function drawScene(gl, programInfo, buffers, texture, deltaTime) {
+
   gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
   gl.clearDepth(1.0);                 // Clear everything
   gl.enable(gl.DEPTH_TEST);           // Enable depth testing
@@ -70,11 +70,13 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
                   [-0.0, 0.0, distCamera]);  // amount to translate
   mat4.rotate(modelViewMatrix,  // destination matrix
               modelViewMatrix,  // matrix to rotate
-              cubeRotation,     // amount to rotate in radians
-              [0, 0, 1]);       // axis to rotate around (Z)
+              // cubeRotation,     // amount to rotate in radians
+              mouseY,
+              [1, 0, 0]);       // axis to rotate around (Y)
   mat4.rotate(modelViewMatrix,  // destination matrix
               modelViewMatrix,  // matrix to rotate
-              cubeRotation * .7,// amount to rotate in radians
+              // cubeRotation * .7,// amount to rotate in radians
+              mouseX,
               [0, 1, 0]);       // axis to rotate around (X)
 
   mat4.invert(normalMatrix, modelViewMatrix);
@@ -182,6 +184,8 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
     false,
     normalMatrix);
 
+  gl.uniform1f(programInfo.uniformLocations.scale, 3.0);
+
   cubeRotation += deltaTime;
 }
 
@@ -199,7 +203,6 @@ function calculatePositions() {
       const x = 16 * Math.pow(Math.sin(t), 3) * Math.sin(u);
       const y = (13 * Math.cos(t) - 5 * Math.cos(2*t)  - 2 * Math.cos(3*t) - Math.cos(4*t)) * Math.sin(u) ;
       const z = 6 * Math.cos(u);
-      if (i > number - 3 && j > (number - 3)) {console.log(z);}
       const normalz = 48 * Math.pow(Math.sin(t),2) * Math.cos(t) * 
         (13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)) * Math.sin(u) * Math.cos(u) -
         16*Math.pow(Math.sin(t),3) * 
