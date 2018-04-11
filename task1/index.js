@@ -10,7 +10,7 @@ attribute vec4 aVertexPosition;
 attribute vec3 aVertexNormal;
 attribute vec4 aVertexColor;
 attribute vec2 aTextureCoord;
-uniform float uScale;
+uniform vec4 uScale;
 
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
@@ -94,18 +94,32 @@ function main() {
   texture.value = texture1;
   
   let then = 0;
-  // let radius = 3;
+  let radius = 0.95;
+  let prev = 0;
+  let isBig = false;
   
     // Draw the scene repeatedly
     function render(now) {
       now *= 0.001;  // convert to seconds
-      // radius =  (now % 10) ? 5 : 3;
+
+        if (now - prev > 2 && !isBig) {
+          radius = 1;
+          prev = now;
+          isBig = true;
+        }
+
+        if (now - prev > 0.1 && isBig) {
+            radius = 0.95;
+            prev = now;
+            isBig = false;
+        }
 
       const deltaTime = now - then;
       then = now;
       const deltaTimeTexture = now*10 - then;
-  
-      drawScene(gl, programInfo, buffers, texture.value, deltaTime, deltaTimeTexture);
+
+
+      drawScene(gl, programInfo, buffers, texture.value, deltaTime, radius);
   
       requestAnimationFrame(render);
     }

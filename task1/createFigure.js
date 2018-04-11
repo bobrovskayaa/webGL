@@ -36,7 +36,7 @@ function initBuffers(gl) {
   };
 }
 
-function drawScene(gl, programInfo, buffers, texture, deltaTime) {
+function drawScene(gl, programInfo, buffers, texture, deltaTime, radius = 1) {
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
   gl.clearDepth(1.0);                 // Clear everything
@@ -184,7 +184,7 @@ function drawScene(gl, programInfo, buffers, texture, deltaTime) {
     false,
     normalMatrix);
 
-  gl.uniform1f(programInfo.uniformLocations.scale, 3.0);
+    gl.uniform4fv(programInfo.uniformLocations.scale, [radius, radius, radius, 1]);
 
   cubeRotation += deltaTime;
 }
