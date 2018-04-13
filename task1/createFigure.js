@@ -110,6 +110,8 @@ function fillVAO(gl, programInfo, buffers){
         gl.enableVertexAttribArray(
             programInfo.attribLocations.vertexNormal);
     }
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
 }
 
 function drawScene(gl, programInfo, buffers, textures, deltaTime, radius = 1) {
@@ -175,13 +177,6 @@ function drawScene(gl, programInfo, buffers, textures, deltaTime, radius = 1) {
     gl.uniform1i(programInfo.uniformLocations.uImage0Location, 0);  // текстурный блок 0
     gl.uniform1i(programInfo.uniformLocations.uImage1Location, 1);  // текстурный блок 1
 
-    // привязываем текстуру к текстурному блоку
-    for (let i = 0; i < textures.length; ++i) {
-        gl.activeTexture(gl.TEXTURE0 + i);
-        gl.bindTexture(gl.TEXTURE_2D, textures[i]);
-    }
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
     gl.useProgram(programInfo.program);
 
     {
