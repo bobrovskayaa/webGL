@@ -31,15 +31,3 @@ window.addEventListener("mousemove", e => {
   mouseX += e.movementX / 40;
   mouseY += e.movementY / 40;
 });
-
-window.addEventListener("dblclick", changeTexture);
-
-function changeTexture(e) {
-  if (texture.id === 1) {
-      texture.id = 2;
-      texture.value = texture2;
-  } else {
-      texture.id = 1;
-      texture.value = texture1;
-  }
-}

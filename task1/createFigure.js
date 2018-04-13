@@ -8,7 +8,7 @@ function initBuffers(gl) {
     const indexBuffer = gl.createBuffer();
     const textureCoordBuffer = gl.createBuffer();
 
-    const [positions, colors, normals, textureCoordData] = calculatePositions();
+    const {positions, colors, normals, textureCoordData} = calculatePositions();
     const indices = calculateIndices(positions);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -223,7 +223,12 @@ function calculatePositions() {
         }
     }
 
-    return [points, vertexColors, vertexNormals, textureCoordData];
+    return {
+        positions: points,
+        colors: vertexColors,
+        normals: vertexNormals,
+        textureCoordData
+    };
 }
 
 function calculateIndices(positions) {

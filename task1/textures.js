@@ -45,3 +45,10 @@ function processTexture(gl, images) {
     }
     return textures;
 }
+
+function textureAnimation(gl, programInfo, t) {
+    const u = Math.pow(Math.sin(t/3), 2);
+    const v = Math.pow(Math.cos(t/3), 2);
+    gl.uniform4fv(programInfo.uniformLocations.coef1, [u, u, u, 1]);
+    gl.uniform4fv(programInfo.uniformLocations.coef0, [v, v, v, 1]);
+}

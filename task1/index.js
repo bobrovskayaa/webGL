@@ -44,6 +44,8 @@ void main(void) {
 
 const fsSource = `
   precision mediump float;
+  uniform vec4 coef0; 
+  uniform vec4 coef1;   
 
   // varying lowp vec4 vColor;
   varying highp vec3 vLighting;
@@ -57,7 +59,7 @@ const fsSource = `
 
    vec4 color0 = texture2D(uImage0, vTextureCoord);
    vec4 color1 = texture2D(uImage1, vTextureCoord);
-   gl_FragColor = color0 * color1;
+   gl_FragColor = coef0 * color0 + coef1 * color1;
   }
 `;
 
@@ -70,14 +72,11 @@ function loadingImages() {
 
 function main(images) {
     const canvas = document.querySelector("#glCanvas");
-    const buttonChangeTexture = document.querySelector("#changeTexture");
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     gl = initGL(gl, canvas);
     console.log('hello');
-
-    buttonChangeTexture.addEventListener('click', changeTexture);
 
     const shaderProgram = initShaders(gl, vsSource, fsSource);
     const programInfo = {
@@ -95,6 +94,8 @@ function main(images) {
             scale: gl.getUniformLocation(shaderProgram, 'uScale'),
             uImage0Location: gl.getUniformLocation(shaderProgram, 'uImage0'),
             uImage1Location: gl.getUniformLocation(shaderProgram, 'uImage1'),
+            coef0: gl.getUniformLocation(shaderProgram, 'coef0'),
+            coef1: gl.getUniformLocation(shaderProgram, 'coef1'),
         },
     };
     const textures = processTexture(gl, images);
@@ -111,7 +112,7 @@ function main(images) {
         now *= 0.001;  // convert to seconds
 
         // heartBeat
-        if (now - prev > 0.5 && !isBig) {
+        if (now - prev > 1 && !isBig) {
             radius = 1;
             prev = now;
             isBig = true;
@@ -126,7 +127,7 @@ function main(images) {
         const deltaTime = now - then;
         then = now;
         const deltaTimeTexture = now * 10 - then;
-
+        textureAnimation(gl, programInfo, now);
 
         drawScene(gl, programInfo, buffers, textures, deltaTime, radius);
 
