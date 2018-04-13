@@ -43,26 +43,32 @@ void main(void) {
 `;
 
 const fsSource = `
+  precision mediump float;
+
   // varying lowp vec4 vColor;
   varying highp vec3 vLighting;
   varying highp vec2 vTextureCoord;
 
-  uniform sampler2D uSampler;  
+  uniform sampler2D uImage0;
+  uniform sampler2D uImage1;
 
   void main() {
   // highp vec4 texelColor = vColor;
 
-    gl_FragColor = texture2D(uSampler, vTextureCoord);
+   vec4 color0 = texture2D(uImage0, vTextureCoord);
+   vec4 color1 = texture2D(uImage1, vTextureCoord);
+   gl_FragColor = color0 * color1;
   }
 `;
 
-window.onload = waitImageLoading;
+window.onload = loadingImages;
 
-function waitImageLoading() {
-    loadImage('1.jpeg', main);
+// дожидаемся загрузки всех изображений
+function loadingImages() {
+    loadImages(['1.jpeg', '2.jpg'], main);
 }
 
-function main(image) {
+function main(images) {
     const canvas = document.querySelector("#glCanvas");
     const buttonChangeTexture = document.querySelector("#changeTexture");
     canvas.width = window.innerWidth;
@@ -86,10 +92,12 @@ function main(image) {
             projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
             modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
             normalMatrix: gl.getUniformLocation(shaderProgram, 'uNormalMatrix'),
-            uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
             scale: gl.getUniformLocation(shaderProgram, 'uScale'),
+            uImage0Location: gl.getUniformLocation(shaderProgram, 'uImage0'),
+            uImage1Location: gl.getUniformLocation(shaderProgram, 'uImage1'),
         },
     };
+    const textures = processTexture(gl, images);
 
     buffers = initBuffers(gl);
 
@@ -120,7 +128,7 @@ function main(image) {
         const deltaTimeTexture = now * 10 - then;
 
 
-        drawScene(gl, programInfo, buffers, image, deltaTime, radius);
+        drawScene(gl, programInfo, buffers, textures, deltaTime, radius);
 
         requestAnimationFrame(render);
     }
