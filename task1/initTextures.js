@@ -63,3 +63,11 @@ function initTextures(gl, url) {
   // Load texture
   return loadTexture(gl, url);
 }
+
+function loadImage(url, callback) {
+    var image = new Image();
+    image.src = url;
+    image.onload = function() {
+        callback(image);
+    }
+}
