@@ -1,7 +1,7 @@
 let cubeRotation = 0.0;
 let verticesNumber = 0;
 
-function initBuffers(gl) {
+function initBuffers(gl, programInfo) {
     const positionBuffer = gl.createBuffer();
     const colorBuffer = gl.createBuffer();
     const normalBuffer = gl.createBuffer();
@@ -27,13 +27,89 @@ function initBuffers(gl) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
-    return {
+    const buffers = {
         position: positionBuffer,
         color: colorBuffer,
         textureCoord: textureCoordBuffer,
         normal: normalBuffer,
         indices: indexBuffer,
     };
+
+    fillVAO(gl, programInfo, buffers);
+
+    return buffers;
+}
+
+function fillVAO(gl, programInfo, buffers){
+    // positions
+    {
+        const numComponents = 3;
+        const type = gl.FLOAT;    // the data in the buffer is 32bit floats
+        const normalize = false;  // don't normalize
+        const stride = 0;         // how many bytes to get from one set of values to the next
+                                  // 0 = use type and numComponents above
+        const offset = 0;         // how many bytes inside the buffer to start from
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+        gl.vertexAttribPointer(
+            programInfo.attribLocations.vertexPosition,
+            numComponents,
+            type,
+            normalize,
+            stride,
+            offset);
+        gl.enableVertexAttribArray(
+            programInfo.attribLocations.vertexPosition);
+    }
+
+    // texture
+    {
+        const num = 2; // every coordinate composed of 2 values
+        const type = gl.FLOAT; // the data in the buffer is 32 bit float
+        const normalize = false; // don't normalize
+        const stride = 0; // how many bytes to get from one set to the next
+        const offset = 0; // how many bytes inside the buffer to start from
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
+        gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, num, type, normalize, stride, offset);
+        gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
+    }
+
+    // color
+    // {
+    //   const numComponents = 4;
+    //   const type = gl.FLOAT;
+    //   const normalize = false;
+    //   const stride = 0;
+    //   const offset = 0;
+    //   gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+    //   gl.vertexAttribPointer(
+    //       programInfo.attribLocations.vertexColor,
+    //       numComponents,
+    //       type,
+    //       normalize,
+    //       stride,
+    //       offset);
+    //   gl.enableVertexAttribArray(
+    //       programInfo.attribLocations.vertexColor);
+    // }
+
+    // normals
+    {
+        const numComponents = 3;
+        const type = gl.FLOAT;
+        const normalize = false;
+        const stride = 0;
+        const offset = 0;
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.normal);
+        gl.vertexAttribPointer(
+            programInfo.attribLocations.vertexNormal,
+            numComponents,
+            type,
+            normalize,
+            stride,
+            offset);
+        gl.enableVertexAttribArray(
+            programInfo.attribLocations.vertexNormal);
+    }
 }
 
 function drawScene(gl, programInfo, buffers, textures, deltaTime, radius = 1) {
@@ -42,9 +118,6 @@ function drawScene(gl, programInfo, buffers, textures, deltaTime, radius = 1) {
     gl.clearDepth(1.0);                 // Clear everything
     gl.enable(gl.DEPTH_TEST);           // Enable depth testing
     gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
-
-    // Clear the canvas before we start drawing on it.
-
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // угол обзора в 45°, с соотношением ширины к высоте равным 640/480
@@ -82,86 +155,6 @@ function drawScene(gl, programInfo, buffers, textures, deltaTime, radius = 1) {
     mat4.invert(normalMatrix, modelViewMatrix);
     mat4.transpose(normalMatrix, normalMatrix);
 
-    // Tell WebGL how to pull out the positions from the position
-    // buffer into the vertexPosition attribute.
-    {
-        const numComponents = 3;
-        const type = gl.FLOAT;    // the data in the buffer is 32bit floats
-        const normalize = false;  // don't normalize
-        const stride = 0;         // how many bytes to get from one set of values to the next
-                                  // 0 = use type and numComponents above
-        const offset = 0;         // how many bytes inside the buffer to start from
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-        gl.vertexAttribPointer(
-            programInfo.attribLocations.vertexPosition,
-            numComponents,
-            type,
-            normalize,
-            stride,
-            offset);
-        gl.enableVertexAttribArray(
-            programInfo.attribLocations.vertexPosition);
-    }
-
-    {
-        const num = 2; // every coordinate composed of 2 values
-        const type = gl.FLOAT; // the data in the buffer is 32 bit float
-        const normalize = false; // don't normalize
-        const stride = 0; // how many bytes to get from one set to the next
-        const offset = 0; // how many bytes inside the buffer to start from
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
-        gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, num, type, normalize, stride, offset);
-        gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
-    }
-
-    // {
-    //   const numComponents = 4;
-    //   const type = gl.FLOAT;
-    //   const normalize = false;
-    //   const stride = 0;
-    //   const offset = 0;
-    //   gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-    //   gl.vertexAttribPointer(
-    //       programInfo.attribLocations.vertexColor,
-    //       numComponents,
-    //       type,
-    //       normalize,
-    //       stride,
-    //       offset);
-    //   gl.enableVertexAttribArray(
-    //       programInfo.attribLocations.vertexColor);
-    // }
-
-    {
-        const numComponents = 3;
-        const type = gl.FLOAT;
-        const normalize = false;
-        const stride = 0;
-        const offset = 0;
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.normal);
-        gl.vertexAttribPointer(
-            programInfo.attribLocations.vertexNormal,
-            numComponents,
-            type,
-            normalize,
-            stride,
-            offset);
-        gl.enableVertexAttribArray(
-            programInfo.attribLocations.vertexNormal);
-    }
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
-    gl.useProgram(programInfo.program);
-
-    {
-        const vertexCount = verticesNumber;
-        const type = gl.UNSIGNED_SHORT;
-        const offset = 0;
-        gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
-    }
-
-    // Set the shader uniforms
-
     gl.uniformMatrix4fv(
         programInfo.uniformLocations.projectionMatrix,
         false,
@@ -183,14 +176,25 @@ function drawScene(gl, programInfo, buffers, textures, deltaTime, radius = 1) {
     gl.uniform1i(programInfo.uniformLocations.uImage1Location, 1);  // текстурный блок 1
 
     // привязываем текстуру к текстурному блоку
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, textures[0]);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, textures[1]);
+    for (let i = 0; i < textures.length; ++i) {
+        gl.activeTexture(gl.TEXTURE0 + i);
+        gl.bindTexture(gl.TEXTURE_2D, textures[i]);
+    }
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
+    gl.useProgram(programInfo.program);
+
+    {
+        const vertexCount = verticesNumber;
+        const type = gl.UNSIGNED_SHORT;
+        const offset = 0;
+        gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+    }
 
     cubeRotation += deltaTime;
 }
 
+// number - global var from keyboardUtils.js
 function calculatePositions() {
     const radius = 0.3;
     let points = [];

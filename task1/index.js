@@ -1,8 +1,6 @@
-let gl; // глобальная переменная для контекста WebGL
+let gl;
 let buffers;
-let texture = {};
-let texture1;
-let texture2;
+let programInfo;
 
 // вершинный шейдер (положение и форма вершин)
 const vsSource = `
@@ -79,7 +77,7 @@ function main(images) {
     console.log('hello');
 
     const shaderProgram = initShaders(gl, vsSource, fsSource);
-    const programInfo = {
+    programInfo = {
         program: shaderProgram,
         attribLocations: {
             vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
@@ -100,7 +98,7 @@ function main(images) {
     };
     const textures = processTexture(gl, images);
 
-    buffers = initBuffers(gl);
+    buffers = initBuffers(gl, programInfo);
 
     let then = 0;
     let radius = 0.95;
