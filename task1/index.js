@@ -17,7 +17,7 @@ uniform mat4 uNormalMatrix;
 varying highp vec2 vTextureCoord;
 
 varying lowp vec4 vColor;
-varying highp vec3 vLighting;
+varying highp vec4 vTransformedNormal;
 
 void main(void) {
   gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition * uScale;
@@ -26,17 +26,7 @@ void main(void) {
 
   vColor = aVertexColor;
   
-  highp vec3 ambientLight = vec3(0.3, 0.3, 0.3);
-  highp vec3 directionalLightColor = vec3(0, 1, 1);
-  highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
-  highp vec3 directionalLightColor2 = vec3(1, 0, 1);
-  highp vec3 directionalVector2 = normalize(vec3(-0.3, 0.3, 0.6));
-
-  highp vec4 transformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
-
-  highp float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
-  highp float directional2 = max(dot(transformedNormal.xyz, directionalVector2), 0.0);
-  vLighting = ambientLight + (directionalLightColor * directional) + (directionalLightColor2 * directional2);
+  vTransformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
 }
 `;
 
@@ -46,8 +36,8 @@ const fsSource = `
   uniform vec4 coef1;   
 
   // varying lowp vec4 vColor;
-  varying highp vec3 vLighting;
   varying highp vec2 vTextureCoord;
+  varying highp vec4 vTransformedNormal;
 
   uniform sampler2D uImage0;
   uniform sampler2D uImage1;
@@ -58,6 +48,19 @@ const fsSource = `
    vec4 color0 = texture2D(uImage0, vTextureCoord);
    vec4 color1 = texture2D(uImage1, vTextureCoord);
    gl_FragColor = coef0 * color0 + coef1 * color1;
+   
+  highp vec3 ambientLight = vec3(0.3, 0.3, 0.3);
+  highp vec3 directionalLightColor = vec3(0, 1, 1);
+  highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
+  highp vec3 directionalLightColor2 = vec3(1, 0, 1);
+  highp vec3 directionalVector2 = normalize(vec3(-0.3, 0.3, 0.6));
+
+  float directional = max(dot(vTransformedNormal.xyz, directionalVector), 0.0);
+
+  float directional2 = max(dot(vTransformedNormal.xyz, directionalVector2), 0.0);
+  highp vec3 vLighting = ambientLight + (directionalLightColor * directional) + (directionalLightColor2 * directional2);
+
+    gl_FragColor = vec4(gl_FragColor.rgb * vLighting, gl_FragColor.a);
   }
 `;
 
