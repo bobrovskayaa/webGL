@@ -18,15 +18,20 @@ varying highp vec2 vTextureCoord;
 
 varying lowp vec4 vColor;
 varying highp vec4 vTransformedNormal;
+varying vec4 mvPosition;
+varying highp vec4 vPosition;
 
 void main(void) {
-  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition * uScale;
-
   vTextureCoord = aTextureCoord;
 
   vColor = aVertexColor;
   
   vTransformedNormal = uNormalMatrix * vec4(aVertexNormal, 1.0);
+  
+  vPosition = aVertexPosition;
+  
+   mvPosition = uModelViewMatrix * aVertexPosition * uScale;
+   gl_Position = uProjectionMatrix * mvPosition;
 }
 `;
 
@@ -38,6 +43,8 @@ const fsSource = `
   // varying lowp vec4 vColor;
   varying highp vec2 vTextureCoord;
   varying highp vec4 vTransformedNormal;
+  varying vec4 mvPosition;
+  varying highp vec4 vPosition;
 
   uniform sampler2D uImage0;
   uniform sampler2D uImage1;
@@ -54,11 +61,19 @@ const fsSource = `
   highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
   highp vec3 directionalLightColor2 = vec3(1, 0, 1);
   highp vec3 directionalVector2 = normalize(vec3(-0.3, 0.3, 0.6));
+  vec3 normal = normalize(vTransformedNormal.xyz);
+  
+  vec3 lightDirection = normalize(directionalLightColor2 - mvPosition.xyz);
+  vec3 reflectionDirection = reflect(-lightDirection, normal);
+  vec3 eyeDirection = normalize(-vPosition.xyz);
 
-  float directional = max(dot(vTransformedNormal.xyz, directionalVector), 0.0);
+  float materialShininess = 32.0;
+  float directional = max(dot(normal, directionalVector), 0.0);
+  float specularLightdirectional = pow(max(dot(reflectionDirection, eyeDirection), 0.0), materialShininess);
 
-  float directional2 = max(dot(vTransformedNormal.xyz, directionalVector2), 0.0);
-  highp vec3 vLighting = ambientLight + (directionalLightColor * directional) + (directionalLightColor2 * directional2);
+  highp vec3 vLighting = ambientLight + // рассеянное
+    (directionalLightColor * directional) + // направленное
+    (directionalLightColor2 * specularLightdirectional); // блики
 
     gl_FragColor = vec4(gl_FragColor.rgb * vLighting, gl_FragColor.a);
   }
