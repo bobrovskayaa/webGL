@@ -43,6 +43,13 @@ function processTexture(gl, images) {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, images[i]);
         textures.push(texture);
     }
+
+    // привязываем текстуру к текстурному блоку
+    for (let i = 0; i < textures.length; ++i) {
+        gl.activeTexture(gl.TEXTURE0 + i);
+        gl.bindTexture(gl.TEXTURE_2D, textures[i]);
+    }
+
     return textures;
 }
 
